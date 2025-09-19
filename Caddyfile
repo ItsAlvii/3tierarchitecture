@@ -1,7 +1,7 @@
 # Replace `example.com` and `api.example.com` with your real domains
 
 # API (used in production on EC2)
-api.porjectdemo.com {
+api.projectdemo.com {
   reverse_proxy backend:3000
 }
 
