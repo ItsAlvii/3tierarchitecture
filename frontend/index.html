@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Born To Make History — King Krule Jukebox</title>
+
+<!-- Google font -->
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Montserrat:wght@300;600;800&display=swap" rel="stylesheet">
+
+<style>
+  /* ---------- Reset & base ---------- */
+  :root{
+    --cream:#f5eee6;
+    --muted:#e6dcd2;
+    --accent:#e85b63; /* retro red */
+    --dark:#0f0f0f;
+    --tv-border:#dcd6cf;
+    --glass: rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background:
+      radial-gradient(ellipse at center, rgba(255,255,255,0.02), rgba(0,0,0,0.4)),
+      #0b0b0b url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect fill="%230b0b0b" width="40" height="40"/><path d="M0 20h40" stroke="%23111111" stroke-opacity="0.02"/></svg>');
+    color:var(--muted);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    padding:24px;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    display:flex;
+    gap:20px;
+    align-items:center;
+    margin-bottom:22px;
+  }
+  .logo {
+    font-family: "Righteous", cursive;
+    font-size:46px;
+    color:var(--cream);
+    letter-spacing:1px;
+    text-shadow: 0 3px 0 rgba(0,0,0,0.6);
+  }
+  .subtitle {
+    font-weight:300;
+    color:var(--muted);
+    margin-left:auto;
+    opacity:0.85;
+  }
+
+  /* ---------- Grid ---------- */
+  .stage {
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap:18px;
+    align-items:start;
+  }
+
+  /* Two big TVs on top (span 7 + 5 to feel offkilter) */
+  .tv-large {
+    grid-column: span 7;
+  }
+  .tv-large.right {
+    grid-column: span 5;
+  }
+
+  /* four small TVs in two rows below -> will place 4 to fill */
+  .tv-small {
+    grid-column: span 3;
+  }
+
+  /* Responsive tweaks */
+  @media (max-width:900px){
+    .tv-large, .tv-large.right, .tv-small {
+      grid-column: span 12 !important;
+    }
+  }
+
+  /* ---------- TV frame ---------- */
+  .tv {
+    position:relative;
+    background:linear-gradient(180deg,#111 0%, #0b0b0b 100%);
+    border-radius:18px;
+    padding:18px;
+    box-shadow:
+      0 10px 30px rgba(0,0,0,0.7),
+      inset 0 -6px 18px rgba(0,0,0,0.5);
+    border:6px solid var(--tv-border);
+    overflow:hidden;
+    min-height:220px;
+  }
+
+  /* Old TV bezel graphic (corner slop + knobs) */
+  .tv::before{
+    content:"";
+    position:absolute;
+    inset:auto 12px 12px auto;
+    width:110px;height:40px;
+    background:linear-gradient(90deg, rgba(255,255,255,0.04), rgba(0,0,0,0.12));
+    border-radius:6px;
+    transform:translateZ(0);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.6);
+    z-index:5;
+  }
+
+  /* screen area */
+  .screen {
+    position:relative;
+    background:#050505;
+    border-radius:8px;
+    overflow:hidden;
+    min-height:160px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .album {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    transform-origin:center;
+    transition: transform 350ms cubic-bezier(.2,.9,.2,1), filter .25s;
+    filter:contrast(1.05) saturate(0.9) grayscale(0);
+  }
+
+  /* Play glow & subtle pulse when playing */
+  .playing .album {
+    animation: spin-slow 30s linear infinite;
+    transform: scale(1.02);
+    filter: contrast(1.05) saturate(1.05);
+  }
+  @keyframes spin-slow {
+    from { transform: rotate(-0.3deg) scale(1.02); }
+    50%   { transform: rotate(0.3deg) scale(1.02); }
+    to { transform: rotate(-0.3deg) scale(1.02); }
+  }
+
+  /* scanlines & grain overlay */
+  .scanlines {
+    pointer-events:none;
+    position:absolute;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.06) 50%, rgba(255,255,255,0.01) 50%);
+    background-size:100% 4px;
+    mix-blend-mode:overlay;
+    z-index:6;
+    opacity:0.65;
+  }
+  .noise {
+    position:absolute; inset:0;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.06"/></svg>');
+    mix-blend-mode:soft-light;
+    z-index:7;
+    pointer-events:none;
+  }
+
+  /* controls (knobs area) */
+  .controls {
+    position:relative;
+    z-index:10;
+    margin-top:12px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .controls-left {
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  .btn {
+    background:linear-gradient(180deg,#111,#1a1a1a);
+    color:var(--muted);
+    padding:10px 12px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.04);
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    cursor:pointer;
+    user-select:none;
+    transition: transform .12s ease, box-shadow .12s;
+  }
+  .btn:active{ transform: translateY(2px); }
+  .btn.primary {
+    background:linear-gradient(180deg,#2b2b2b,#111);
+    border:1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 6px 18px rgba(232,91,99,0.06);
+  }
+  .icon { font-weight:800; font-size:18px; color:var(--accent); }
+
+  /* progress */
+  .progresswrap{
+    flex:1;
+    margin:0 12px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    min-width:120px;
+  }
+  .time { font-size:13px; color:rgba(255,255,255,0.6); width:56px; text-align:center; }
+  .bar {
+    height:8px;
+    background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+    border-radius:6px;
+    overflow:hidden;
+    flex:1;
+    cursor:pointer;
+    position:relative;
+  }
+  .bar > .fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, rgba(232,91,99,0.95), rgba(232,91,99,0.4));
+    transition:width .12s linear;
+  }
+
+  /* label */
+  .meta {
+    margin-top:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+  }
+  .title {
+    font-weight:800;
+    color:var(--cream);
+    font-size:15px;
+    letter-spacing:0.4px;
+  }
+  .artist { opacity:0.7; font-size:13px; font-weight:600; color:var(--muted); }
+
+  /* small TVs styling tweaks */
+  .tv.small { min-height:150px; padding:12px; border-radius:14px; }
+  .tv.small .screen { min-height:110px; }
+
+  /* retro stickers & big text */
+  .hero-text {
+    grid-column: 1 / -1;
+    margin-top:26px;
+    font-family:"Righteous", cursive;
+    color:var(--cream);
+    font-size:86px;
+    letter-spacing:1px;
+    text-shadow: 0 6px 0 rgba(0,0,0,0.65);
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:center;
+  }
+  .sub-hero { font-size:18px; color:var(--muted); margin-top:8px; text-align:center; margin-bottom:28px; }
+
+  /* tv small grid spacing for bottom row (2 per row) */
+  .bottom-row {
+    grid-column: 1 / -1;
+    display:grid;
+    grid-template-columns: repeat(12,1fr);
+    gap:18px;
+  }
+  .bottom-row .tv-small{ grid-column: span 3; }
+  @media (max-width:900px){ .bottom-row .tv-small{ grid-column: span 12; } }
+
+  /* little retro stars */
+  .stars {
+    display:flex;
+    gap:10px;
+    margin-left:12px;
+  }
+  .star { width:18px;height:18px;background:var(--muted); clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%); opacity:0.9; transform:rotate(-6deg); }
+
+  /* footer */
+  footer { margin-top:36px; color:rgba(255,255,255,0.45); text-align:right; font-size:13px; opacity:0.9; }
+
+  /* tiny touches */
+  .knobs { display:flex; gap:6px; align-items:center; }
+  .knob { width:9px;height:9px;border-radius:50%; background:var(--tv-border); box-shadow:0 2px 0 rgba(0,0,0,0.5); }
+</style>
+</head>
+<body>
+
+<!--
+  ASSETS: put these in `assets/` relative to this index.html
+
+  Images:
+    assets/images/baby_blue.jpg
+    assets/images/slush_puppy.jpg
+    assets/images/out_getting_ribs.jpg
+    assets/images/seaforth.jpg
+    assets/images/the_locomotive.jpg
+    assets/images/dum_surfer.jpg
+
+  Audio (prefer mp3 + ogg fallback):
+    assets/audio/baby_blue.mp3
+    assets/audio/slush_puppy.mp3
+    assets/audio/out_getting_ribs.mp3
+    assets/audio/seaforth.mp3
+    assets/audio/the_locomotive.mp3
+    assets/audio/dum_surfer.mp3
+
+  Replace with your files or same-named files; keep file names exact for convenience.
+-->
+
+<header>
+  <div class="logo">Born To Make</div>
+  <div class="stars" aria-hidden="true">
+    <span class="star"></span><span class="star"></span><span class="star"></span>
+  </div>
+  <div class="subtitle">you were never meant to be ordinary — a King Krule jukebox</div>
+</header>
+
+<main class="stage" role="main" aria-label="Music jukebox">
+
+  <!-- Large TV 1 -->
+  <section class="tv tv-large" data-track="baby_blue" id="tv-baby_blue">
+    <div class="screen" role="region" aria-label="Baby Blue album">
+      <img class="album" src="assets/images/baby_blue.jpg" alt="Baby Blue - King Krule cover" />
+      <div class="scanlines"></div>
+      <div class="noise"></div>
+    </div>
+    <div class="meta">
+      <div>
+        <div class="title">Baby Blue</div>
+        <div class="artist">King Krule</div>
+      </div>
+      <div class="knobs" aria-hidden="true">
+        <div class="knob"></div>
+        <div class="knob"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="controls-left">
+        <button class="btn play-btn" data-for="baby_blue" aria-label="Play Baby Blue"><span class="icon">▶</span>Play</button>
+        <button class="btn" onclick="document.querySelector('#tv-baby_blue .album').classList.toggle('glitch');" title="toggle glitch">GL</button>
+      </div>
+
+      <div class="progresswrap">
+        <div class="time" id="time-baby_blue">0:00</div>
+        <div class="bar" data-for="baby_blue" aria-hidden="true">
+          <div class="fill"></div>
+        </div>
+        <div class="time" id="dur-baby_blue">0:00</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Large TV 2 -->
+  <section class="tv tv-large right" data-track="slush_puppy" id="tv-slush_puppy">
+    <div class="screen" role="region" aria-label="Slush Puppy album">
+      <img class="album" src="assets/images/slush_puppy.jpg" alt="Slush Puppy - King Krule cover" />
+      <div class="scanlines"></div>
+      <div class="noise"></div>
+    </div>
+    <div class="meta">
+      <div>
+        <div class="title">Slush Puppy</div>
+        <div class="artist">King Krule</div>
+      </div>
+      <div class="knobs" aria-hidden="true">
+        <div class="knob"></div>
+        <div class="knob"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="controls-left">
+        <button class="btn play-btn" data-for="slush_puppy" aria-label="Play Slush Puppy"><span class="icon">▶</span>Play</button>
+        <button class="btn" onclick="document.querySelector('#tv-slush_puppy .album').classList.toggle('glitch');" title="toggle glitch">GL</button>
+      </div>
+      <div class="progresswrap">
+        <div class="time" id="time-slush_puppy">0:00</div>
+        <div class="bar" data-for="slush_puppy"><div class="fill"></div></div>
+        <div class="time" id="dur-slush_puppy">0:00</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Big headline -->
+  <div class="hero-text" aria-hidden="true">HISTORY</div>
+  <div class="sub-hero">Graphical jukebox — click a TV to play. Only one track plays at a time. Very loud vibes.</div>
+
+  <!-- Bottom row TVs: 4 small items (we have 6 total, so place the remaining 4 here) -->
+  <div class="bottom-row" style="grid-column:1/-1;">
+    <section class="tv small tv-small" id="tv-out_getting_ribs" data-track="out_getting_ribs">
+      <div class="screen"><img class="album" src="assets/images/out_getting_ribs.jpg" alt="Out Getting Ribs"/></div>
+      <div class="meta">
+        <div>
+          <div class="title">Out Getting Ribs</div>
+          <div class="artist">King Krule</div>
+        </div>
+        <div class="knobs"><div class="knob"></div></div>
+      </div>
+      <div class="controls">
+        <div class="controls-left">
+          <button class="btn play-btn" data-for="out_getting_ribs"><span class="icon">▶</span>Play</button>
+        </div>
+        <div class="progresswrap">
+          <div class="time" id="time-out_getting_ribs">0:00</div>
+          <div class="bar" data-for="out_getting_ribs"><div class="fill"></div></div>
+          <div class="time" id="dur-out_getting_ribs">0:00</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tv small tv-small" id="tv-seaforth" data-track="seaforth">
+      <div class="screen"><img class="album" src="assets/images/seaforth.jpg" alt="Seaforth"/></div>
+      <div class="meta">
+        <div>
+          <div class="title">Seaforth</div>
+          <div class="artist">King Krule</div>
+        </div>
+        <div class="knobs"><div class="knob"></div></div>
+      </div>
+      <div class="controls">
+        <div class="controls-left">
+          <button class="btn play-btn" data-for="seaforth"><span class="icon">▶</span>Play</button>
+        </div>
+        <div class="progresswrap">
+          <div class="time" id="time-seaforth">0:00</div>
+          <div class="bar" data-for="seaforth"><div class="fill"></div></div>
+          <div class="time" id="dur-seaforth">0:00</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tv small tv-small" id="tv-the_locomotive" data-track="the_locomotive">
+      <div class="screen"><img class="album" src="assets/images/the_locomotive.jpg" alt="The Locomotive"/></div>
+      <div class="meta">
+        <div>
+          <div class="title">The Locomotive</div>
+          <div class="artist">King Krule</div>
+        </div>
+        <div class="knobs"><div class="knob"></div></div>
+      </div>
+      <div class="controls">
+        <div class="controls-left">
+          <button class="btn play-btn" data-for="the_locomotive"><span class="icon">▶</span>Play</button>
+        </div>
+        <div class="progresswrap">
+          <div class="time" id="time-the_locomotive">0:00</div>
+          <div class="bar" data-for="the_locomotive"><div class="fill"></div></div>
+          <div class="time" id="dur-the_locomotive">0:00</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tv small tv-small" id="tv-dum_surfer" data-track="dum_surfer">
+      <div class="screen"><img class="album" src="assets/images/dum_surfer.jpg" alt="Dum Surfer"/></div>
+      <div class="meta">
+        <div>
+          <div class="title">Dum Surfer</div>
+          <div class="artist">King Krule</div>
+        </div>
+        <div class="knobs"><div class="knob"></div></div>
+      </div>
+      <div class="controls">
+        <div class="controls-left">
+          <button class="btn play-btn" data-for="dum_surfer"><span class="icon">▶</span>Play</button>
+        </div>
+        <div class="progresswrap">
+          <div class="time" id="time-dum_surfer">0:00</div>
+          <div class="bar" data-for="dum_surfer"><div class="fill"></div></div>
+          <div class="time" id="dur-dum_surfer">0:00</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<!-- audio elements (hidden). Put real files in assets/audio/ -->
+<audio id="audio-baby_blue" src="assets/audio/baby_blue.mp3" preload="metadata"></audio>
+<audio id="audio-slush_puppy" src="assets/audio/slush_puppy.mp3" preload="metadata"></audio>
+<audio id="audio-out_getting_ribs" src="assets/audio/out_getting_ribs.mp3" preload="metadata"></audio>
+<audio id="audio-seaforth" src="assets/audio/seaforth.mp3" preload="metadata"></audio>
+<audio id="audio-the_locomotive" src="assets/audio/the_locomotive.mp3" preload="metadata"></audio>
+<audio id="audio-dum_surfer" src="assets/audio/dum_surfer.mp3" preload="metadata"></audio>
+
+<footer>Built for vibes • drag your songs into <code>assets/audio/</code> and album art into <code>assets/images/</code>. Sync to S3 when ready.</footer>
+
+<script>
+/* ---- Utilities ---- */
+const q = s => document.querySelector(s);
+const qAll = s => Array.from(document.querySelectorAll(s));
+const formatTime = s => {
+  if (!isFinite(s)) return '0:00';
+  const m = Math.floor(s/60);
+  const sec = Math.floor(s%60).toString().padStart(2,'0');
+  return `${m}:${sec}`;
+}
+
+/* ---- Track registry ----
+   Each tv has data-track attribute matching audio id suffix
+*/
+const tracks = ['baby_blue','slush_puppy','out_getting_ribs','seaforth','the_locomotive','dum_surfer'];
+
+/* store current playing */
+let current = null;
+
+/* initialize */
+tracks.forEach(id=>{
+  const audio = q('#audio-' + id);
+  const playBtn = q('.play-btn[data-for="' + id + '"]');
+  const tv = q('#tv-' + id) || q('[data-track="'+id+'"]');
+  const bar = q('.bar[data-for="'+id+'"]');
+  const fill = bar ? bar.querySelector('.fill') : null;
+  const timeEl = q('#time-' + id);
+  const durEl = q('#dur-' + id);
+
+  // set up metadata loaded
+  audio.addEventListener('loadedmetadata', ()=>{
+    if (durEl) durEl.textContent = formatTime(audio.duration);
+  });
+
+  // progress update
+  audio.addEventListener('timeupdate', () => {
+    if (timeEl) timeEl.textContent = formatTime(audio.currentTime);
+    if (fill && audio.duration) {
+      const p = (audio.currentTime / audio.duration)*100;
+      fill.style.width = p + '%';
+    }
+  });
+
+  // ended -> clear UI
+  audio.addEventListener('ended', ()=>{
+    tv.classList.remove('playing');
+    if (playBtn) {
+      playBtn.innerHTML = '<span class="icon">▶</span>Play';
+    }
+    current = null;
+  });
+
+  // click album toggles play
+  const album = tv.querySelector('.album');
+  album && album.addEventListener('click', ()=> togglePlay(id));
+
+  // bar click seek
+  if (bar) {
+    bar.addEventListener('click', (ev)=>{
+      const rect = bar.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+      audio.currentTime = (audio.duration || 0) * pct;
+      if (audio.paused){
+        // visual update only
+        fill.style.width = (pct*100)+'%';
+        if (timeEl) timeEl.textContent = formatTime(pct*(audio.duration||0));
+      }
+    });
+  }
+
+  // play button
+  if (playBtn){
+    playBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      togglePlay(id);
+    });
+  }
+});
+
+/* toggle play, and ensure single-play behavior */
+function togglePlay(id){
+  const audio = q('#audio-' + id);
+  const tv = q('#tv-' + id);
+  const btn = q('.play-btn[data-for="'+id+'"]');
+
+  if (!audio) return;
+
+  // stop current other audio
+  if (current && current !== id){
+    const prevAudio = q('#audio-' + current);
+    const prevTv = q('#tv-' + current);
+    const prevBtn = q('.play-btn[data-for="'+current+'"]');
+    prevAudio.pause();
+    prevAudio.currentTime = 0;
+    prevTv && prevTv.classList.remove('playing');
+    if (prevBtn) prevBtn.innerHTML = '<span class="icon">▶</span>Play';
+  }
+
+  if (audio.paused){
+    audio.play().catch(err=>{
+      console.warn('Playback error', err);
+      alert('Playback failed. Make sure your browser allows autoplay or click a play button directly.');
+    });
+    tv.classList.add('playing');
+    if (btn) btn.innerHTML = '<span class="icon">⏸</span>Pause';
+    current = id;
+  } else {
+    audio.pause();
+    tv.classList.remove('playing');
+    if (btn) btn.innerHTML = '<span class="icon">▶</span>Play';
+    if (current === id) current = null;
+  }
+}
+
+/* improve UX: play when user interacts anywhere first */
+document.addEventListener('click', (e)=>{
+  // nothing here; default behavior okay
+});
+
+/* keyboard shortcuts: space toggles current or first track if none */
+document.addEventListener('keydown', (e)=>{
+  if (e.code === 'Space' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){
+    e.preventDefault();
+    if (current) togglePlay(current);
+    else togglePlay(tracks[0]);
+  }
+});
+
+/* small polyfill: hide audio controls on iOS by user gesture is required; we provide play buttons */
+</script>
+
+</body>
+</html>
+
