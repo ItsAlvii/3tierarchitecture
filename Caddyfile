@@ -1,12 +1,24 @@
-# Replace `example.com` and `api.example.com` with your real domains
+deadman.razesteer.com {
+    # Serve frontend via CloudFront (S3)
+    reverse_proxy /* {
+        to <CLOUDFRONT_DOMAIN>
+        # Optional: preserve Host header for CloudFront
+        header_up Host {host}
+    }
 
-# API (used in production on EC2)
-api.projectdemo.com {
-  reverse_proxy backend:3000
+    # Reverse proxy /api requests to backend
+    handle_path /api* {
+        reverse_proxy backend:3000
+        log {
+            output file /var/log/caddy/backend.log
+            format json
+        }
+    }
+
+    # Optional: access logs for frontend requests
+    log {
+        output file /var/log/caddy/frontend.log
+        format json
+    }
 }
 
-# Frontend (useful for local/dev with docker-compose)
-# In production you will use CloudFront -> S3, so this block can be unused.
-www.projectdemo.com {
-  reverse_proxy frontend:80
-}

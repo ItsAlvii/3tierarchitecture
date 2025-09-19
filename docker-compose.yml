@@ -2,22 +2,13 @@ services:
   backend:
     build: ./backend
     container_name: backend
-    env_file: .env
-    restart: always
-    networks:
-      - webnet
-
-  frontend:
-    build: ./frontend
-    container_name: frontend
-    restart: always
-    networks:
-      - webnet
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
 
   caddy:
     image: caddy:2
     container_name: caddy
-    restart: always
     ports:
       - "80:80"
       - "443:443"
@@ -25,15 +16,10 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
-    networks:
-      - webnet
     depends_on:
       - backend
-      - frontend
-
-networks:
-  webnet:
 
 volumes:
   caddy_data:
   caddy_config:
+
