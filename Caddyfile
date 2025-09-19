@@ -1,12 +1,6 @@
 deadman.razesteer.com {
-    # Serve frontend via CloudFront (S3)
-    reverse_proxy /* {
-        to <CLOUDFRONT_DOMAIN>
-        # Optional: preserve Host header for CloudFront
-        header_up Host {host}
-    }
 
-    # Reverse proxy /api requests to backend
+    # Backend API first
     handle_path /api* {
         reverse_proxy backend:3000
         log {
@@ -15,10 +9,15 @@ deadman.razesteer.com {
         }
     }
 
-    # Optional: access logs for frontend requests
-    log {
-        output file /var/log/caddy/frontend.log
-        format json
+    # Everything else goes to CloudFront (frontend)
+    handle {
+        reverse_proxy d1711w3paqtqug.cloudfront.net {
+            header_up Host {host}
+        }
+        log {
+            output file /var/log/caddy/frontend.log
+            format json
+        }
     }
 }
 
