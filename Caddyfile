@@ -1,0 +1,12 @@
+# Replace `example.com` and `api.example.com` with your real domains
+
+# API (used in production on EC2)
+api.porjectdemo.com {
+  reverse_proxy backend:3000
+}
+
+# Frontend (useful for local/dev with docker-compose)
+# In production you will use CloudFront -> S3, so this block can be unused.
+www.projectdemo.com {
+  reverse_proxy frontend:80
+}
